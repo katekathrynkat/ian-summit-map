@@ -12,18 +12,18 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-```{r}
+```{r load data}
 
-# Load necessary packages
+### Load necessary packages ###
 
 library(tidyverse)
 library(sp)
 library(raster)
 library(ggimage)
-library(ggnewscale)
+library(extrafont)
 select <- dplyr::select
 
-# Load points
+### Load point data ###
 
 peaks_df <- read_csv('peaks.csv')
 
@@ -36,35 +36,28 @@ peaks <- SpatialPointsDataFrame(peaks_xy, data = peaks_df,
 peaks_nad <- spTransform(peaks, CRSobj = CRS('+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83
 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0'))
 
-# Load elevation data
+### Load elevation data ###
+# NOTE: TIF files are too large to be stored in a git repo and so are housed locally
 
-#untar('./spatial/srco48i0100a.tif_nt00850.tar.gz')
-color_hillshade_us <- raster('./spatial/srco48i0100a.tif')
-
-#untar('./spatial/elev48i0100a.tif_nt00828.tar.gz')
-elevation_us <- raster('./spatial/elev48i0100a.tif')
+elevation_us <- raster('../large-files/ian-summit-map/elev48i0100a.tif') # elevation data from https://nationalmap.gov/small_scale/index.html
 elevation_crop <- crop(elevation_us, extent(-2130000, -1770000, 2700000, 3180000))
 elevation_simple <- aggregate(elevation_crop, fact = 15)
 
-#untar('./spatial/srgr48i0100a.tif_nt00854.tar.gz')
-hillshade_us <- raster('./spatial/srgr48i0100a.tif')
+hillshade_us <- raster('../large-files/ian-summit-map/srgr48i0100a.tif') # hillshade data from https://nationalmap.gov/small_scale/index.html
 hillshade_crop <- crop(hillshade_us, extent(-2130000, -1770000, 2700000, 3180000))
 hillshade_simple <- aggregate(hillshade_crop, fact = 15)
 
 ```
 
-```{r}
+```{r spatial data frames}
 
-# Coerce spatial files to data frames
+### Coerce spatial files to data frames ###
 
 elevation_df <- as.data.frame(elevation_simple, xy = TRUE) %>% 
   rename(elev = elev48i0100a)
   
 hillshade_df <- as.data.frame(hillshade_simple, xy = TRUE) %>%
   rename(shade = srgr48i0100a)
-
-water <- elevation_df %>% 
-  filter(elev <= 8) # change to elev == -86
 
 peaks_nad_df <- as.data.frame(peaks_nad, xy = TRUE) %>% 
   select(x.1, y.1, name, type, year, date, elev) %>% 
@@ -73,7 +66,9 @@ peaks_nad_df <- as.data.frame(peaks_nad, xy = TRUE) %>%
 
 ```
 
-```{r}
+```{r point and legend data frames}
+
+### Wrangle point data for visualization ###
 
 summits <- peaks_nad_df %>% 
   filter(type == 'peak') %>% 
@@ -82,18 +77,19 @@ summits <- peaks_nad_df %>%
   mutate(order = as.character(row_number()),
          year = factor(year, levels = c('freshman', 'sophomore', 'junior', 'senior')),
          label = paste0(order, ' - ', name, ' (', elev, ' ft)'),
-         labx = c(rep(-1910000, 23), rep(-1868000, 23), rep(-1824000, 23)),
-         laby = c(seq(from = 2800000, to = 2720000, length.out = 23), seq(from = 2800000, to = 2720000, length.out = 23), seq(from = 2800000, to = 2720000, length.out = 23)))
+         labx = c(rep(-1903000, 23), rep(-1861000, 23), rep(-1817000, 23)),
+         laby = c(seq(from = 2805000, to = 2725000, length.out = 23), seq(from = 2805000, to = 2725000, length.out = 23), seq(from = 2805000, to = 2725000, length.out = 23)))
 
 other <- peaks_nad_df %>% 
-  filter(type != 'peak' & type != 'attempt' & type != 'school') %>% 
+  filter(type != 'peak' & type != 'school') %>% 
   mutate(
     image = case_when(
       type == 'home' ~ './pics/home.png',
       type == 'hiking' ~ './pics/hiking.png',
       type == 'biking' ~ './pics/biking.png',
       type == 'skiing' ~ './pics/skiing.png',
-      type == 'climbing' ~ './pics/climbing.png'
+      type == 'climbing' ~ './pics/climbing.png',
+      type == 'attempt' ~ './pics/x.png'
     )
   )
 
@@ -101,27 +97,38 @@ uw <- peaks_nad_df %>%
   filter(type == 'school') %>% 
   mutate(image = './pics/uwlogo.png')
 
-legend_title <- data.frame(x = c(-1910000, -1910000),
-                           y = c(2810000, 2840000),
+### Create data frames for legend ###
+
+# Headers
+legend_title <- data.frame(x = c(-1843000, -1818000),
+                           y = c(2815000, 2852000),
                            label = c('Peaks Summitted', 'Places'))
 
-legend <- data.frame(x = c(seq(-1907000, -1840000, length.out = 4)),
-                     y = c(2805000, 2805000, 2805000, 2805000),
+# Summit info text
+legend <- data.frame(x = c(seq(-1889000, -1805000, length.out = 4)),
+                     y = c(rep(2810000, 4)),
                      label = c('Freshman Year', 'Sophomore Year', 'Junior Year', 'Senior Year'))
 
-legend_points <- data.frame(x = c(seq(-1909000, -1842000, length.out = 4)),
-                     y = c(2805000, 2805000, 2805000, 2805000),
+# Summit info icons
+legend_points <- data.frame(x = c(seq(-1892000, -1808000, length.out = 4)),
+                     y = c(rep(2810000, 4)),
                      year = c('freshman', 'sophomore', 'junior', 'senior'))
 
-legend2 <- data.frame(x = c(rep(-1911000, 6)),
-                      y = c(seq(2835000, 2815000, length.out = 6)),
-                      label = c('University of Washington', 'Home', 'Hiking', 'Climbing', 'Skiing', 'Biking'))
+# Place info text
+legend2 <- data.frame(x = c(rep(-1832000, 7)),
+                      y = c(seq(2847000, 2821000, length.out = 7)),
+                      label = c('University of Washington', 'Home - Olympia', 'Hiking or Backpacking Trips', 'Sport Climbing', 'Alpine Skiing', 'Mountain Biking', 'Attempted Summit'))
 
-legend_pics <- data.frame(x = c(rep(-1909000, 6)),
-                      y = c(seq(2835000, 2815000, length.out = 6)),
-                          image = c('./pics/uwlogo.png', './pics/home.png', './pics/hiking.png', './pics/climbing.png', './pics/skiing.png', './pics/biking.png'))
+# Place info icons
+legend_pics <- data.frame(x = c(rep(-1835000, 7)),
+                      y = c(seq(2847000, 2821000, length.out = 7)),
+                          image = c('./pics/uwlogo.png', './pics/home.png', './pics/hiking.png', './pics/climbing.png', './pics/skiing.png', './pics/biking.png', './pics/x.png'))
 
-# ggplot map
+```
+
+```{r map}
+
+# Create map using ggplot
 
 ggplot() +
   ### MAP ###
@@ -132,9 +139,7 @@ ggplot() +
   scale_fill_gradient(low = 'white', high = 'midnightblue') +
   geom_raster(data = hillshade_df,
               aes(x = x, y = y, alpha = -shade)) +
-#  geom_raster(data = water,
-#              aes(x = x, y = y),
-#              fill = 'grey20') +
+
   ### POINTS ###
   geom_point(data = summits,
              aes(x = x, y = y, color = year),
@@ -150,14 +155,20 @@ ggplot() +
              aes(x = x, y = y, image = image),
              size = 0.03, asp = 0.7) +
   ### LEGEND ###
+  geom_rect(aes(xmin = -1908000, xmax = -1778000, ymin = 2708000, ymax = 2872000),
+            fill = 'white', alpha = 0.3) +
+  geom_text(aes(x = -1843000, y = 2865000, label = 'IAN CULHANE\'S SUMMITS, 2015-2019'),
+            size = 10, color = 'black', fontface = 2) +
+  geom_text(aes(x = -1843000, y = 2860000, label = 'WASHINGTON & OREGON'),
+            size = 7, color = 'black', fontface = 2) +
+  geom_text(aes(x = -1843000, y = 2855000, label = 'Mountain peaks and other adventures and other asdf climbed by Ian Culhane during four years as an undergraduate at the University of Washington.'),
+            size = 4, color = 'black', fontface = 2) +
   geom_text(data = summits,
             aes(x = labx, y = laby, label = label),
             size = 4, color = 'black', hjust = 0, fontface = 2) +
   geom_text(data = legend_title,
             aes(x = x, y = y, label = label),
-            size = 7, color = 'black', hjust = 0, fontface = 2) +
-  geom_text(aes(x = -1910000, y = 2840000, label = 'Summits and other asdf climbed by Ian Culhane during his time at the University of Washington.'),
-            size = 4, color = 'black', hjust = 0, fontface = 2) +
+            size = 7, color = 'black', fontface = 2) +
   geom_text(data = legend,
             aes(x = x, y = y, label = label),
             size = 5, color = 'black', hjust = 0, fontface = 2) +
@@ -170,10 +181,10 @@ ggplot() +
   geom_image(data = legend_pics,
              aes(x = x, y = y, image = image),
              size = 0.01, asp = 0.7, color = 'midnightblue') + 
-  geom_image(aes(x = -1909000, y = 2835000, image = './pics/uwlogo.png'),
+  geom_image(aes(x = -1835000, y = 2847000, image = './pics/uwlogo.png'),
              size = 0.01, asp = 0.7) +
-  geom_text(aes(x = -1910000, y = 2710000, label = 'Map by Kate Culhane, 2019.\nCode at github.com/katekathrynkat'),
-            size = 3, color = 'black', hjust = 0, fontface = 4) +
+  geom_text(aes(x = -1783000, y = 2715000, label = 'Map by Kate Culhane, 2019.\nElevation data from the USGS 1997-2014 Edition of the National Atlas of the United States, Alber\'s projection, NAD83.\nCode at github.com/katekathrynkat/ian-summit-map.'),
+            size = 3, color = 'black', hjust = 1, fontface = 4) +
 #  annotation_north_arrow(location = 'br', which_north = "true",
 #                         style = north_arrow_fancy_orienteering) +
 #  annotation_scale(location = 'tl') +
@@ -185,6 +196,7 @@ ggplot() +
   scale_y_continuous(expand = c(0,0,0,0)) +
   coord_sf()
 
-ggsave('map9.pdf', width = 30, height = 40)
+ggsave('map.pdf', width = 30, height = 40)
 
 ```
+
