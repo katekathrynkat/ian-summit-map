@@ -20,7 +20,8 @@ library(tidyverse)
 library(sp)
 library(raster)
 library(ggimage)
-library(extrafont)
+# library(extrafont)
+# library(ggspatial)
 select <- dplyr::select
 
 ### Load point data ###
@@ -78,7 +79,7 @@ summits <- peaks_nad_df %>%
          year = factor(year, levels = c('freshman', 'sophomore', 'junior', 'senior')),
          label = paste0(order, ' - ', name, ' (', elev, ' ft)'),
          labx = c(rep(-1903000, 23), rep(-1861000, 23), rep(-1817000, 23)),
-         laby = c(seq(from = 2805000, to = 2725000, length.out = 23), seq(from = 2805000, to = 2725000, length.out = 23), seq(from = 2805000, to = 2725000, length.out = 23)))
+         laby = c(seq(from = 2802000, to = 2722000, length.out = 23), seq(from = 2802000, to = 2722000, length.out = 23), seq(from = 2802000, to = 2722000, length.out = 23)))
 
 other <- peaks_nad_df %>% 
   filter(type != 'peak' & type != 'school') %>% 
@@ -89,7 +90,8 @@ other <- peaks_nad_df %>%
       type == 'biking' ~ './pics/biking.png',
       type == 'skiing' ~ './pics/skiing.png',
       type == 'climbing' ~ './pics/climbing.png',
-      type == 'attempt' ~ './pics/x.png'
+      type == 'attempt' ~ './pics/x.png',
+      type == 'kayaking' ~ './pics/kayaking.png'
     )
   )
 
@@ -100,29 +102,29 @@ uw <- peaks_nad_df %>%
 ### Create data frames for legend ###
 
 # Headers
-legend_title <- data.frame(x = c(-1843000, -1818000),
-                           y = c(2815000, 2852000),
-                           label = c('Peaks Summitted', 'Places'))
+legend_title <- data.frame(x = c(-1846000, -1871000),
+                           y = c(2812000, 2839000),
+                           label = c('Peaks Summitted, by decreasing elevation', 'Notable Locations and Trips'))
 
 # Summit info text
 legend <- data.frame(x = c(seq(-1889000, -1805000, length.out = 4)),
-                     y = c(rep(2810000, 4)),
+                     y = c(rep(2807000, 4)),
                      label = c('Freshman Year', 'Sophomore Year', 'Junior Year', 'Senior Year'))
 
 # Summit info icons
 legend_points <- data.frame(x = c(seq(-1892000, -1808000, length.out = 4)),
-                     y = c(rep(2810000, 4)),
+                     y = c(rep(2807000, 4)),
                      year = c('freshman', 'sophomore', 'junior', 'senior'))
 
 # Place info text
-legend2 <- data.frame(x = c(rep(-1832000, 7)),
-                      y = c(seq(2847000, 2821000, length.out = 7)),
-                      label = c('University of Washington', 'Home - Olympia', 'Hiking or Backpacking Trips', 'Sport Climbing', 'Alpine Skiing', 'Mountain Biking', 'Attempted Summit'))
+legend2 <- data.frame(x = c(rep(-1898000, 4), rep(-1860000, 4)),
+                      y = c(rep(seq(2834000, 2819000, length.out = 4), 2)),
+                      label = c('University of Washington', 'Home - Olympia', 'Hiking or Backpacking', 'Sport Climbing', 'Alpine Skiing', 'Mountain Biking', 'Kayaking', 'Attempted Summit'))
 
 # Place info icons
-legend_pics <- data.frame(x = c(rep(-1835000, 7)),
-                      y = c(seq(2847000, 2821000, length.out = 7)),
-                          image = c('./pics/uwlogo.png', './pics/home.png', './pics/hiking.png', './pics/climbing.png', './pics/skiing.png', './pics/biking.png', './pics/x.png'))
+legend_pics <- data.frame(x = c(rep(-1901000, 4), rep(-1863000, 4)),
+                          y = c(rep(seq(2834000, 2819000, length.out = 4), 2)),
+                          image = c('./pics/uwlogo.png', './pics/home.png', './pics/hiking.png', './pics/climbing.png', './pics/skiing.png', './pics/biking.png', './pics/kayaking.png', './pics/x.png'))
 
 ```
 
@@ -132,14 +134,13 @@ legend_pics <- data.frame(x = c(rep(-1835000, 7)),
 
 ggplot() +
   ### MAP ###
-#  layer_spatial(elevation_simple) +
-#  scale_fill_gradient(low = 'white', high = 'midnightblue') +
-  geom_raster(data = elevation_df,
-              aes(x = x, y = y, fill = elev)) +
-  scale_fill_gradient(low = 'white', high = 'midnightblue') +
-  geom_raster(data = hillshade_df,
-              aes(x = x, y = y, alpha = -shade)) +
-
+ # layer_spatial(elevation_simple) +
+ # scale_fill_gradient(low = 'white', high = 'midnightblue') +
+ geom_raster(data = elevation_df,
+             aes(x = x, y = y, fill = elev)) +
+ scale_fill_gradient(low = 'white', high = 'midnightblue') +
+ geom_raster(data = hillshade_df,
+             aes(x = x, y = y, alpha = -shade)) +
   ### POINTS ###
   geom_point(data = summits,
              aes(x = x, y = y, color = year),
@@ -153,50 +154,68 @@ ggplot() +
              size = 0.01, asp = 0.7, color = 'midnightblue') +
   geom_image(data = uw,
              aes(x = x, y = y, image = image),
-             size = 0.03, asp = 0.7) +
+             size = 0.02, asp = 0.75) +
   ### LEGEND ###
-  geom_rect(aes(xmin = -1908000, xmax = -1778000, ymin = 2708000, ymax = 2872000),
-            fill = 'white', alpha = 0.3) +
-  geom_text(aes(x = -1843000, y = 2865000, label = 'IAN CULHANE\'S SUMMITS, 2015-2019'),
-            size = 10, color = 'black', fontface = 2) +
-  geom_text(aes(x = -1843000, y = 2860000, label = 'WASHINGTON & OREGON'),
-            size = 7, color = 'black', fontface = 2) +
-  geom_text(aes(x = -1843000, y = 2855000, label = 'Mountain peaks and other adventures and other asdf climbed by Ian Culhane during four years as an undergraduate at the University of Washington.'),
-            size = 4, color = 'black', fontface = 2) +
-  geom_text(data = summits,
-            aes(x = labx, y = laby, label = label),
-            size = 4, color = 'black', hjust = 0, fontface = 2) +
-  geom_text(data = legend_title,
-            aes(x = x, y = y, label = label),
-            size = 7, color = 'black', fontface = 2) +
-  geom_text(data = legend,
-            aes(x = x, y = y, label = label),
-            size = 5, color = 'black', hjust = 0, fontface = 2) +
-  geom_point(data = legend_points,
-             aes(x = x, y = y, color = year),
-             shape = 21, stroke = 2, size = 8, fill = 'midnightblue') +
-  geom_text(data = legend2,
-            aes(x = x, y = y, label = label),
-            size = 5, color = 'black', hjust = 0, fontface = 2) +
-  geom_image(data = legend_pics,
-             aes(x = x, y = y, image = image),
-             size = 0.01, asp = 0.7, color = 'midnightblue') + 
-  geom_image(aes(x = -1835000, y = 2847000, image = './pics/uwlogo.png'),
-             size = 0.01, asp = 0.7) +
-  geom_text(aes(x = -1783000, y = 2715000, label = 'Map by Kate Culhane, 2019.\nElevation data from the USGS 1997-2014 Edition of the National Atlas of the United States, Alber\'s projection, NAD83.\nCode at github.com/katekathrynkat/ian-summit-map.'),
-            size = 3, color = 'black', hjust = 1, fontface = 4) +
-#  annotation_north_arrow(location = 'br', which_north = "true",
-#                         style = north_arrow_fancy_orienteering) +
-#  annotation_scale(location = 'tl') +
+ geom_rect(aes(xmin = -1908000, xmax = -1778000, ymin = 2708000, ymax = 2871000),
+           fill = 'white', alpha = 0.3) +
+  geom_rect(aes(xmin = -1908000, xmax = -1778000, ymin = 2708000, ymax = 2871000),
+            fill = NA, color = 'midnightblue', size = 2) +
+ geom_text(aes(x = -1843000, y = 2866000, label = 'STOKE IS HIGH'),
+           size = 12, color = 'black', fontface = 2, family = 'serif') +
+ geom_text(aes(x = -1843000, y = 2860000, label = 'IAN CULHANE\'S SUMMITS IN WASHINGTON & OREGON, 2015-2019'),
+           size = 7, color = 'black', fontface = 2, family = 'serif') +
+ geom_text(aes(x = -1843000, y = 2850000, label = 'Volcanic peaks, spicy scrambles, stormy bails, trashy hikes\u2014and everything in between. This map shows most of the notable and ridiculous\ntrips that Ian Culhane embarked upon during his four years as an undergraduate at the University of Washington. This map doesn\'t show the\nstories behind the trips: ice axes buzzing with electricity during a stormed-out bivvy on Goode Mountain; an entire taco bar and cheesecake\nhauled up to Three Fingers Lookout; or a glorious Christmas Eve summit of the Mt. Ellinor trailhead, after which Ian\'s sister drove their\nparents\' car into a ditch. Here, these anecdotes are just points on a map; if you want to know the full stories you\'ll have to ask Ian himself.'),
+           size = 4, color = 'black', fontface = 4) +
+ geom_text(data = summits,
+           aes(x = labx, y = laby, label = label),
+           size = 4, color = 'black', hjust = 0, fontface = 2) +
+ geom_text(data = legend_title,
+           aes(x = x, y = y, label = label),
+           size = 7, color = 'black', fontface = 2, family = 'serif') +
+ geom_text(data = legend,
+           aes(x = x, y = y, label = label),
+           size = 5, color = 'black', hjust = 0, fontface = 2) +
+ geom_point(data = legend_points,
+            aes(x = x, y = y, color = year),
+            shape = 21, stroke = 2, size = 8, fill = 'midnightblue') +
+ geom_text(data = legend2,
+           aes(x = x, y = y, label = label),
+           size = 5, color = 'black', hjust = 0, fontface = 2) +
+ geom_image(data = legend_pics,
+            aes(x = x, y = y, image = image),
+            size = 0.01, asp = 0.7, color = 'midnightblue') +
+ geom_image(aes(x = -1901000, y = 2834000, image = './pics/uwlogo.png'),
+            size = 0.01, asp = 0.75) +
+ geom_text(aes(x = -1780000, y = 2713000, label = 'Map by Kate Culhane, 2019.\nElevation data from the USGS 1997-2014 Edition of the National Atlas of the United States, Alber\'s projection, NAD83.\nCode at github.com/katekathrynkat/ian-summit-map.'),
+           size = 3, color = 'black', hjust = 1, fontface = 4) +
+ # annotation_north_arrow(location = 'br', which_north = "true",
+ #                        style = north_arrow_fancy_orienteering) +
+ # annotation_scale(location = 'br', pad_y = unit(0, 'cm')) +
+ geom_segment(aes(x = -1817000, y = 2828000,
+                  xend = -1817000+16214, yend = 2828000),
+              color = 'midnightblue', size = 5) +
+ geom_segment(aes(x = -1817000+16214, y = 2828000,
+                  xend = -1817000+16214+16214, yend = 2828000),
+              color = 'gold', size = 5) +
+ geom_text(aes(x = -1817000, y = 2831000, label = '0'),
+            size = 5, color = 'black', fontface = 2) +
+  geom_text(aes(x = -1817000+16214, y = 2831000, label = '10'),
+            size = 5, color = 'black', fontface = 2) +
+  geom_text(aes(x = -1817000+16214+16214+1500, y = 2831000, label = '20 mi.'),
+            size = 5, color = 'black', fontface = 2) +
+  geom_image(aes(x = -1827000, y = 2828000, image = './pics/rose_14deg.png'),
+             size = 0.06, asp = 0.75) +
   ### THEME ###
   theme_void() +
   theme(legend.position = 'none',
-        plot.margin = unit(c(0,0,0,0), 'cm')) +
+        plot.margin = unit(c(0,0,0,0), 'cm'),
+        panel.border = element_rect(color = 'midnightblue', size = 15, fill = NA)) +
   scale_x_continuous(expand = c(0,0,0,0)) +
   scale_y_continuous(expand = c(0,0,0,0)) +
-  coord_sf()
+  coord_cartesian()
 
-ggsave('map.pdf', width = 30, height = 40)
+
+ggsave('map6.pdf', width = 30, height = 40)
 
 ```
 
