@@ -82,7 +82,7 @@ x,y,name,type,year,date,elev,source,original_x,original_y
 -120.924718,48.505515,Storm King,peak,senior,28-Jul-18,8520,peakbagger,-120.922718,48.491515
 -121.205259,48.495413,Hidden Lake Lookout,peak,junior,19-May-18,6890,peakbagger,,
 -121.035951,48.515692,Boston Peak,attempt,senior,12-May-19,8700,peakbagger,-121.035951,48.495692
--123.16891,48.500037,San Juans,kayaking,senior,,,kate,,
+-123.094637,48.606879,San Juans,kayaking,senior,,,kate,,
 -120.655361,48.501171,South Early Winter Spire,peak,junior,17-Jun-17,7807,peakbagger,-120.655361,48.512171
 -120.658119,48.525417,Liberty Bell Mountain,peak,junior,30-Jul-17,7720,peakbagger,-120.658119,48.515417
 -120.816193,48.523611,Black Peak,peak,junior,9-Jul-17,8970,peakbagger,,
@@ -99,3 +99,6 @@ x,y,name,type,year,date,elev,source,original_x,original_y
 -121.6923,48.8467,Artist Point,hiking,junior,31-Dec-17,5700,facebook,,
 -121.420209,48.859485,Easy Peak,peak,junior,11-Jun-18,6613,peakbagger,,
 -121.64312,48.956628,Winchester Mountain,peak,freshman,21-May-16,6510,peakbagger,,
+-122.903856,47.15527,Boston Harbor,kayaking,freshman,1-Nov-15,,kate,,
+-122.173267,46.242195,Pumice Plain,hiking,sophomore,1-Aug-16,,kate,,
+-122.694864,47.082683,Nisqually Wildlife Refuge,hiking,senior,1-Jan-19,,kate,,
